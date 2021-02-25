@@ -9089,6 +9089,9 @@ namespace ts {
                 if (!pushTypeResolution(symbol, TypeSystemPropertyName.Type)) {
                     return links.type = errorType;
                 }
+                if (typeToString(getTypeOfSymbol(links.target!)).includes('VVV')) {
+                    console.log(4, typeToString(getTypeOfSymbol(links.target!)), links.mapper)
+                }
                 let type = instantiateType(getTypeOfSymbol(links.target!), links.mapper);
                 if (!popTypeResolution()) {
                     type = reportCircularityError(symbol);
@@ -13791,6 +13794,10 @@ namespace ts {
         // Also, unlike union types, the order of the constituent types is preserved in order that overload resolution
         // for intersections of types with signatures can be deterministic.
         function getIntersectionType(types: readonly Type[], aliasSymbol?: Symbol, aliasTypeArguments?: readonly Type[]): Type {
+            if (types.some(type => typeToString(type).includes('VVV'))) {
+                console.trace()
+                console.log(0, types.map(type => typeToString(type)))
+            }
             const typeMembershipMap: ESMap<string, Type> = new Map();
             const includes = addTypesToIntersection(typeMembershipMap, 0, types);
             const typeSet: Type[] = arrayFrom(typeMembershipMap.values());
@@ -15430,6 +15437,7 @@ namespace ts {
         function getMappedType(type: Type, mapper: TypeMapper): Type {
             switch (mapper.kind) {
                 case TypeMapKind.Simple:
+                    // if (typeToString(type) === 'TTT') console.log(3, typeToString(type), typeToString(mapper.source), typeToString(mapper.target))
                     return type === mapper.source ? mapper.target : type;
                 case TypeMapKind.Array:
                     const sources = mapper.sources;
@@ -15828,6 +15836,7 @@ namespace ts {
         function instantiateTypeWorker(type: Type, mapper: TypeMapper, aliasSymbol: Symbol | undefined, aliasTypeArguments: readonly Type[] | undefined): Type {
             const flags = type.flags;
             if (flags & TypeFlags.TypeParameter) {
+                if (typeToString(type) === 'TTT') console.log(2, typeToString(type), typeToString(getMappedType(type, mapper)))
                 return getMappedType(type, mapper);
             }
             if (flags & TypeFlags.Object) {
@@ -15851,6 +15860,9 @@ namespace ts {
                 }
                 const newAliasSymbol = aliasSymbol || type.aliasSymbol;
                 const newAliasTypeArguments = aliasSymbol ? aliasTypeArguments : instantiateTypes(type.aliasTypeArguments, mapper);
+                if (newTypes.some(type => typeToString(type).includes('VXX'))) {
+                    console.log(1, newTypes.map(type => typeToString(type)), types.map(type => typeToString(type)), typeToString((mapper as { kind: TypeMapKind.Simple, source: Type, target: Type }).source), typeToString((mapper as { kind: TypeMapKind.Simple, source: Type, target: Type }).source.immediateBaseConstraint!), typeToString((mapper as { kind: TypeMapKind.Simple, source: Type, target: Type }).target))
+                }
                 return flags & TypeFlags.Intersection || origin && origin.flags & TypeFlags.Intersection ?
                     getIntersectionType(newTypes, newAliasSymbol, newAliasTypeArguments) :
                     getUnionType(newTypes, UnionReduction.Literal, newAliasSymbol, newAliasTypeArguments);
